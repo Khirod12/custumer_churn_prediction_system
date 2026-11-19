@@ -1,0 +1,21 @@
+{
+  "model": "Deep Neural Network",
+  "dataset": "Bank Churn_Modelling.csv",
+  "accuracy": 0.8,
+  "precision": 0.506087,
+  "recall": 0.714988,
+  "f1": 0.592668,
+  "roc_auc": 0.854568,
+  "threshold": 0.5,
+  "epochs": 250,
+  "confusion_matrix": [
+    [
+      1309,
+      284
+    ],
+    [
+      116,
+      291
+    ]
+  ]
+}

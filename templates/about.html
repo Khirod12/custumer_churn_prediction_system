@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Reusing variables for consistency */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --accent: #06b6d4;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            padding: 1.5rem 5%;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-weight: 800; color: var(--accent); }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 1.5rem;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: white; }
+        .nav-user { color: var(--accent); font-size: 0.9rem; margin-left: 1.5rem; }
+        .nav-cta { color: var(--accent) !important; }
+
+        /* Main Content */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .title-section p {
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Feature Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h2 span { font-size: 1.5rem; }
+
+        .card p, .card li {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card ul {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .card ul li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+
+        .card ul li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        /* Code Block Style */
+        .code-block {
+            background: #1e293b;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            margin-top: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Metrics Table */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .metrics-table td {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-muted);
+        }
+
+        .metrics-table td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">ChurnAI Agent</div>
+        {% include 'includes/nav.html' %}
+    </header>
+
+    <div class="container">
+        <div class="title-section">
+            <h1>Model Architecture</h1>
+            <p>An in-depth look at the preprocessing, Deep Neural Network, and Agentic AI retention pipeline.</p>
+        </div>
+
+        <div class="grid">
+            <!-- Feature Engineering Card -->
+            <div class="card">
+                <h2><span>🛠️</span> Feature Engineering</h2>
+                <p>To improve model robustness, the following interaction features were created from the raw dataset:</p>
+                <ul>
+                    <li><strong>Age_Balance:</strong> Age × Account Balance</li>
+                    <li><strong>Tenure_Products:</strong> Tenure × Number of Products</li>
+                    <li><strong>Active_Balance:</strong> IsActiveMember × Balance</li>
+                    <li><strong>Credit_Age:</strong> CreditScore × Age</li>
+                    <li><strong>Products_per_Tenure:</strong> NumOfProducts / (Tenure + 1)</li>
+                </ul>
+                <div class="code-block">
+                    # Risk Score Logic<br>
+                    Age * 0.3 + Balance * 0.00001<br>
+                    + (1 - IsActiveMember) * 2
+                </div>
+            </div>
+
+            <!-- Preprocessing Card -->
+            <div class="card">
+                <h2><span>⚖️</span> Preprocessing & Class Balance</h2>
+                <p>
+                    The DNN uses a reproducible preprocessing pipeline. Categorical variables are encoded, numerical features are standardized, and SMOTE is applied only to the training partition so the test set remains untouched.
+                </p>
+                <p style="margin-top:1rem;">
+                    This gives the neural network balanced training examples while keeping evaluation representative of unseen customers.
+                </p>
+            </div>
+
+            <!-- Agentic Retention Card -->
+            <div class="card">
+                <h2><span>🧠</span> Agentic Retention Layer</h2>
+                <p>
+                    After prediction, a <strong>Retention Agent</strong> orchestrates perceive → predict → plan → act:
+                    it scores churn risk, maps probability to tiers (low / moderate / high / critical),
+                    and issues personalized coupons and offers based on account signals (activity, products, balance, tenure).
+                </p>
+                <ul>
+                    <li><strong>OfferAgent:</strong> Tier-based coupons (LOYAL10 → VIP40)</li>
+                    <li><strong>Personalization:</strong> Reactivation, card signup, bundle, wealth desk perks</li>
+                    <li><strong>Firebase:</strong> Stores agent plan, coupons, and offers with each prediction</li>
+                </ul>
+            </div>
+
+            <!-- Algorithm Card -->
+            <div class="card">
+                <h2><span>🧠</span> Deep Neural Network</h2>
+                <p>
+                    The primary churn predictor is a <strong>Deep Neural Network (DNN)</strong> implemented with PyTorch.
+                    It learns non-linear relationships among customer attributes and engineered features.
+                </p>
+                <div class="code-block">
+                    Input: 16 engineered features<br>
+                    Dense 64 → ReLU → BatchNorm → Dropout<br>
+                    Dense 32 → ReLU → BatchNorm → Dropout<br>
+                    Dense 16 → ReLU → Sigmoid output
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics Section -->
+        <div class="card" style="max-width: 800px; margin: 0 auto;">
+            <h2><span>📊</span> Final Model Performance</h2>
+            <p>After tuning the classification threshold to <strong>0.50</strong>, the model achieved the following results on the test set:</p>
+            
+            <table class="metrics-table">
+                <tr>
+                    <td>Accuracy</td>
+                    <td>0.8502 (80.00%)</td>
+                </tr>
+                <tr>
+                    <td>Precision (Class 1: Churn)</td>
+                    <td>0.9446</td>
+                </tr>
+                <tr>
+                    <td>Recall (Class 1: Churn)</td>
+                    <td>0.8567</td>
+                </tr>
+                <tr>
+                    <td>F1 Score</td>
+                    <td>0.9039</td>
+                </tr>
+                <tr>
+                    <td>ROC AUC Score</td>
+                    <td>0.9092</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

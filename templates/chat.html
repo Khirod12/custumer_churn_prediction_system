@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Chat | ChurnAI Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.85);
+            --accent: #06b6d4;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --bot-bg: rgba(15, 23, 42, 0.9);
+            --user-bg: rgba(6, 182, 212, 0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        nav {
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo { font-weight: 800; color: var(--accent); }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 1.5rem;
+        }
+        .nav-links a:hover { color: white; }
+        .nav-links a.active { color: var(--accent); }
+        .nav-user { color: var(--accent); font-size: 0.9rem; margin-left: 1.5rem; }
+        .nav-cta { color: var(--accent) !important; }
+
+        .chat-layout {
+            flex: 1;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .chat-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .chat-header h1 { font-size: 1.5rem; margin-bottom: 0.35rem; }
+        .chat-header p { color: var(--text-muted); font-size: 0.9rem; }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .suggestion {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .suggestion:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            min-height: 380px;
+            max-height: calc(100vh - 280px);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .msg {
+            max-width: 88%;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+        .msg.bot {
+            align-self: flex-start;
+            background: var(--bot-bg);
+            border: 1px solid var(--border);
+        }
+        .msg.user {
+            align-self: flex-end;
+            background: var(--user-bg);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        .msg strong { color: var(--accent); }
+
+        .typing {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            display: none;
+        }
+        .typing.visible { display: block; }
+
+        .input-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .input-row input {
+            flex: 1;
+            background: var(--bot-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        .input-row input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .input-row button {
+            background: var(--accent);
+            color: var(--bg-dark);
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .input-row button:hover { filter: brightness(1.1); }
+        .input-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">ChurnAI Agent</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/predict">Predict</a>
+            <a href="/chat" class="active">Chat</a>
+            {% if current_user %}
+            <span class="nav-user">Hi, {{ current_user.name }}</span>
+            <a href="/logout">Logout</a>
+            {% else %}
+            <a href="/login">Login</a>
+            <a href="/signup" class="nav-cta">Sign up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="chat-layout">
+        <div class="chat-header">
+            <h1>Project & Retention Assistant</h1>
+            <p>Ask about churn prediction, agents, coupons, offers, and risk tiers</p>
+        </div>
+
+        <div class="suggestions">
+            <button type="button" class="suggestion" data-q="How does churn prediction work?">How prediction works</button>
+            <button type="button" class="suggestion" data-q="Explain risk tiers and coupons">Risk tiers & coupons</button>
+            <button type="button" class="suggestion" data-q="What is coupon VIP40?">What is VIP40?</button>
+            <button type="button" class="suggestion" data-q="Difference between coupons and offers">Coupons vs offers</button>
+            <button type="button" class="suggestion" data-q="What agents run in this project?">Agentic workflow</button>
+            {% if has_last_prediction %}
+            <button type="button" class="suggestion" data-q="What were my last offers and coupons?">My last prediction</button>
+            {% endif %}
+        </div>
+
+        <div class="messages" id="messages">
+            <div class="msg bot" id="welcome"></div>
+        </div>
+        <div class="typing" id="typing">Assistant is typing…</div>
+
+        <form class="input-row" id="chat-form">
+            <input type="text" id="user-input" placeholder="Ask about the project, coupons, or offers…" autocomplete="off" required>
+            <button type="submit" id="send-btn">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const messagesEl = document.getElementById('messages');
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('user-input');
+        const typing = document.getElementById('typing');
+        const sendBtn = document.getElementById('send-btn');
+
+        function formatBotText(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`([^`]+)`/g, '<code style="color:#22d3ee">$1</code>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        }
+
+        function appendMessage(text, role) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + role;
+            if (role === 'bot') {
+                div.innerHTML = formatBotText(text);
+            } else {
+                div.textContent = text;
+            }
+            messagesEl.appendChild(div);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        async function sendMessage(text) {
+            const msg = text.trim();
+            if (!msg) return;
+            appendMessage(msg, 'user');
+            input.value = '';
+            typing.classList.add('visible');
+            sendBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                appendMessage(data.reply || 'Sorry, something went wrong.', 'bot');
+            } catch (e) {
+                appendMessage('Could not reach the server. Is the app running?', 'bot');
+            } finally {
+                typing.classList.remove('visible');
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendMessage(input.value);
+        });
+
+        document.querySelectorAll('.suggestion').forEach(btn => {
+            btn.addEventListener('click', () => sendMessage(btn.dataset.q));
+        });
+
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: 'hello' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('welcome').innerHTML = formatBotText(data.reply);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+flask
+numpy
+pandas
+torch
+joblib
+scikit-learn
+imbalanced-learn
+catboost
+firebase-admin
+gradio
+seaborn
+matplotlib

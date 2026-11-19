@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict Churn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --accent: #06b6d4;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981; /* Green for No Churn */
+            --danger: #ef4444;  /* Red for Churn */
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .orb {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%);
+            top: -100px;
+            right: -100px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        nav {
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+        .logo { font-weight: 800; color: var(--accent); }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 1.5rem;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: white; }
+        .nav-user { color: var(--accent); font-size: 0.9rem; margin-left: 1.5rem; }
+        .nav-cta { color: var(--accent) !important; }
+
+        .main-content {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        .form-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 800px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+        
+        /* Styling for sticky valid inputs */
+        input:valid, select:valid {
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        select { cursor: pointer; }
+        select option { background: var(--bg-dark); }
+
+        /* Buttons */
+        .action-bar {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button, .btn-link {
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-predict {
+            background: var(--accent);
+            color: var(--bg-dark);
+            border: none;
+            flex: 2;
+        }
+
+        .btn-predict:hover {
+            background: #22d3ee;
+            transform: translateY(-2px);
+        }
+
+        .btn-random {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+
+        .btn-random:hover { background: rgba(255,255,255,0.1); }
+
+        /* Result Section Styles */
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            animation: slideDown 0.4s ease-out;
+            border: 1px solid transparent;
+        }
+
+        /* Dynamic Colors based on result */
+        .result-churn {
+            background: rgba(239, 68, 68, 0.1); /* Light Red bg */
+            border-color: rgba(239, 68, 68, 0.5); /* Red border */
+            color: #fca5a5; /* Red text */
+        }
+
+        .result-no-churn {
+            background: rgba(16, 185, 129, 0.1); /* Light Green bg */
+            border-color: rgba(16, 185, 129, 0.5); /* Green border */
+            color: #6ee7b7; /* Green text */
+        }
+
+        .result-icon { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
+        .result-text { font-weight: 700; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px;}
+        
+        .btn-reset {
+            margin-top: 1.5rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 24px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-reset:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .agent-panel {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.5);
+            text-align: left;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .agent-panel h3 {
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .agent-summary {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .tier-low { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .tier-moderate { background: rgba(234, 179, 8, 0.2); color: #fde047; }
+        .tier-high { background: rgba(249, 115, 22, 0.2); color: #fdba74; }
+        .tier-critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+        .offer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .offer-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .offer-card h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.35rem;
+            color: var(--text-main);
+        }
+
+        .offer-code {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .offer-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .offer-value {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #818cf8;
+        }
+
+        .agent-steps {
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .agent-steps li {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            list-style: none;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .agent-steps li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .action-bar { flex-direction: column; }
+            .offer-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+
+    <script>
+        function fillRandom() {
+            // Random Data Generator
+            document.getElementsByName("credit_score")[0].value = Math.floor(Math.random() * (850 - 350) + 350);
+            
+            const geos = ["France", "Spain", "Germany"];
+            document.getElementsByName("geography")[0].value = geos[Math.floor(Math.random() * geos.length)];
+
+            const genders = ["Male", "Female"];
+            document.getElementsByName("gender")[0].value = genders[Math.floor(Math.random() * genders.length)];
+
+            document.getElementsByName("age")[0].value = Math.floor(Math.random() * (80 - 18) + 18);
+            document.getElementsByName("tenure")[0].value = Math.floor(Math.random() * 10);
+            document.getElementsByName("balance")[0].value = (Math.random() * 250000).toFixed(2);
+            document.getElementsByName("num_products")[0].value = Math.floor(Math.random() * 4) + 1;
+
+            document.getElementsByName("has_card")[0].value = Math.random() > 0.5 ? "1" : "0";
+            document.getElementsByName("is_active")[0].value = Math.random() > 0.5 ? "1" : "0";
+
+            document.getElementsByName("salary")[0].value = (Math.random() * 200000).toFixed(2);
+            
+            // Visual flash effect
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(el => {
+                el.style.borderColor = "#06b6d4";
+                setTimeout(() => el.style.borderColor = "", 300);
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <div class="orb"></div>
+
+    <nav>
+        <div class="logo">ChurnAI Agent</div>
+        {% include 'includes/nav.html' %}
+    </nav>
+
+    <div class="main-content">
+        <div class="form-container">
+            <h1>Customer Prediction</h1>
+            <span class="subtitle">Agentic churn prediction with personalized retention coupons &amp; offers</span>
+
+            <form method="POST">
+                <div class="form-grid">
+                    <!-- Row 1 -->
+                    <div class="form-group">
+                        <label>Credit Score</label>
+                        <input type="number" name="credit_score" placeholder="350 - 850" value="{{ request.form.get('credit_score', '') }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Geography</label>
+                        <select name="geography">
+                            <option {{ 'selected' if request.form.get('geography') == 'France' else '' }}>France</option>
+                            <option {{ 'selected' if request.form.get('geography') == 'Spain' else '' }}>Spain</option>
+                            <option {{ 'selected' if request.form.get('geography') == 'Germany' else '' }}>Germany</option>
+                        </select>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select name="gender">
+                            <option {{ 'selected' if request.form.get('gender') == 'Male' else '' }}>Male</option>
+                            <option {{ 'selected' if request.form.get('gender') == 'Female' else '' }}>Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" name="age" placeholder="18 - 100" value="{{ request.form.get('age', '') }}" required>
+                    </div>
+
+                    <!-- Row 3 -->
+                    <div class="form-group">
+                        <label>Tenure (Years)</label>
+                        <input type="number" name="tenure" placeholder="0 - 10" value="{{ request.form.get('tenure', '') }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Balance</label>
+                        <input type="number" step="any" name="balance" placeholder="e.g. 100000" value="{{ request.form.get('balance', '') }}" required>
+                    </div>
+
+                    <!-- Row 4 -->
+                    <div class="form-group">
+                        <label>Number of Products</label>
+                        <input type="number" name="num_products" placeholder="1 - 4" value="{{ request.form.get('num_products', '') }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Has Credit Card?</label>
+                        <select name="has_card">
+                            <option value="1" {{ 'selected' if request.form.get('has_card') == '1' else '' }}>Yes</option>
+                            <option value="0" {{ 'selected' if request.form.get('has_card') == '0' else '' }}>No</option>
+                        </select>
+                    </div>
+
+                    <!-- Row 5 -->
+                    <div class="form-group">
+                        <label>Active Member?</label>
+                        <select name="is_active">
+                            <option value="1" {{ 'selected' if request.form.get('is_active') == '1' else '' }}>Yes</option>
+                            <option value="0" {{ 'selected' if request.form.get('is_active') == '0' else '' }}>No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estimated Salary</label>
+                        <input type="number" step="any" name="salary" placeholder="Annual Salary" value="{{ request.form.get('salary', '') }}" required>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="action-bar">
+                        <button type="submit" class="btn-predict">🔍 Predict Churn</button>
+                        <button type="button" class="btn-random" onclick="fillRandom()">🎲 Random Fill</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Result Display Logic -->
+            {% if result %}
+            {% set is_churn = retention_plan and retention_plan.prediction.label == 'Churn' %}
+            <div class="result-box {{ 'result-churn' if is_churn else 'result-no-churn' }}">
+                <span class="result-icon">
+                    {% if is_churn %}⚠️{% else %}✅{% endif %}
+                </span>
+                <div class="result-text">{{ result }}</div>
+                <div style="margin-top:0.6rem;color:var(--text-muted);font-size:0.9rem;">Primary Model: <strong style="color:var(--accent);">Deep Neural Network (DNN)</strong></div>
+                
+                <a href="/predict" class="btn-reset">🔄 Try Another Prediction</a>
+            </div>
+
+            {% if retention_plan %}
+            <div class="agent-panel">
+                <h3>🤖 Retention Agent — Recommended Actions</h3>
+                <span class="tier-badge tier-{{ retention_plan.retention.risk_tier }}">
+                    {{ retention_plan.retention.risk_tier }} risk · {{ retention_plan.retention.churn_probability_pct }}% churn probability
+                </span>
+                <p class="agent-summary">{{ retention_plan.plan.summary }}</p>
+
+                {% if retention_plan.retention.coupons %}
+                <h3 style="font-size: 0.95rem; color: var(--text-main); margin-top: 1rem;">Coupons</h3>
+                <div class="offer-grid">
+                    {% for item in retention_plan.retention.coupons %}
+                    <div class="offer-card">
+                        <div class="offer-code">{{ item.code }}</div>
+                        <h4>{{ item.title }}</h4>
+                        <p>{{ item.description }}</p>
+                        <div class="offer-value">{{ item.value }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if retention_plan.retention.offers %}
+                <h3 style="font-size: 0.95rem; color: var(--text-main); margin-top: 1.25rem;">Offers</h3>
+                <div class="offer-grid">
+                    {% for item in retention_plan.retention.offers %}
+                    <div class="offer-card">
+                        <div class="offer-code">{{ item.code }}</div>
+                        <h4>{{ item.title }}</h4>
+                        <p>{{ item.description }}</p>
+                        <div class="offer-value">{{ item.value }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <ul class="agent-steps">
+                    {% for step in retention_plan.plan.steps %}
+                    <li><strong>{{ step.agent }}:</strong> {{ step.action }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
